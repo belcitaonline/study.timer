@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study TimerPro</title>
+
+    <style>
+        @font-face {
+            font-family: "Nasalization";
+            src: url("/static/fonts/Nasalization Rg.otf");
+        }
+
+        @font-face {
+            font-family: "DS-Digital";
+            src: url("/static/fonts/DS-DIGI.TTF");
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #111 no-repeat center center/cover;
+            color: white;
+            font-family: "Nasalization", sans-serif;
+            overflow: hidden;
+            transition: background 0.5s ease;
+            position: relative;
+        }
+
+        .bg-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+
+        .btn-panel-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: "Nasalization", sans-serif;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .btn-panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .apple-glass {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        .card {
+            position: relative;
+            z-index: 2;
+            padding: 50px;
+            text-align: center;
+            width: 520px; 
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #timer {
+            font-family: "DS-Digital", monospace;
+            font-size: 100px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            font-variant-numeric: tabular-nums; 
+            width: 100%;
+            text-align: center;
+        }
+
+        .botones {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        button.control-btn {
+            font-family: "Nasalization", sans-serif;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+            background: #fff;
+            color: #000;
+        }
+
+        button.control-btn:hover {
+            transform: scale(1.05);
+            background: #eee;
+        }
+
+        #btnTimer, #btnReset {
+            width: 170px;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 20px;
+            left: -420px;
+            width: 380px;
+            height: calc(100vh - 40px);
+            z-index: 5;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .widget {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+        }
+
+        .widget-title {
+            font-size: 11px;
+            opacity: 0.6;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .input-nota, .input-planner {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .calendar-widget {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .calendar-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+
+        .calendar-btn:hover {
+            opacity: 1;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .day-name {
+            opacity: 0.5;
+            font-weight: bold;
+        }
+
+        .calendar-day {
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 12px;
+        }
+
+        .calendar-day:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .calendar-day.selected {
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .calendar-day.has-data {
+            border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .calendar-day.has-data.selected {
+            border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+        }
+
+        .planner-section {
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .historial-lista {
+            list-style: none;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .historial-lista li {
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 6px;
+            border-left: 3px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .btn-item-delete {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .btn-item-delete:hover {
+            color: #ff5f56;
+        }
+
+        .file-upload-btn {
+            display: block;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-add-item {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-family: "Nasalization", sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-add-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <button class="btn-panel-toggle" onclick="toggleSidebar()">Menu</button>
+
+    <div class="sidebar apple-glass" id="sidebarMenu">
+        <h2>Centro de Control</h2>
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
+
+        <div class="widget">
+            <div class="widget-title">Nota de estudio actual</div>
+            <input type="text" id="inputNota" class="input-nota" placeholder="Materia o tema actual...">
+        </div>
+
+        <div class="widget calendar-widget">
+            <div class="widget-title">Calendario Planner</div>
+            <div class="calendar-header">
+                <button class="calendar-btn" onclick="mesAnterior()"><</button>
+                <span id="calendarMonthYear" style="font-size: 12px; font-weight: bold;"></span>
+                <button class="calendar-btn" onclick="mesSiguiente()">></button>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 5px 0;">
+
+            <div class="planner-section">
+                <div class="widget-title" id="plannerTargetTitle">Agenda del día</div>
+                <ul class="historial-lista" id="listaHistorial"></ul>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <input type="text" id="inputManualPlanner" class="input-planner" placeholder="Añadir prueba, tarea o nota manual...">
+                    <button class="btn-add-item" onclick="agregarNotaManual()">Añadir a la agenda</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="widget" style="padding: 5px;">
+            <div class="widget-title" style="margin-left: 10px; margin-top: 5px;">Reproductor de audio</div>
+            <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DWZ7VnoXD1s7S?utm_source=generator&theme=0&si=8c9f1ac8028b4943" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">Fondo de pantalla</div>
+            <label for="inputFondo" class="file-upload-btn">Seleccionar imagen</label>
+            <input type="file" id="inputFondo" accept="image/*" style="display: none;" onchange="cambiarFondo(event)">
+        </div>
+    </div>
+
+    <div class="card apple-glass">
+        <div id="timer">00:00:00</div>
+        <div class="botones">
+            <button id="btnTimer" class="control-btn" onclick="toggleTimer()">Iniciar</button>
+            <button id="btnReset" class="control-btn" onclick="reiniciarTimer()">Reiniciar</button>
+        </div>
+    </div>
+
+    <script>
+        let segundos = 0;
+        let intervalo = null;
+        let appData = JSON.parse(localStorage.getItem('timerAppData')) || {};
+        let currentDate = new Date();
+        let selectedDateStr = obtenerFechaId(new Date());
+
+        window.onload = function() {
+            cargarFondoGuardado();
+            renderCalendario();
+            cambiarDiaSeleccionado(selectedDateStr);
+        };
+
+        function obtenerFechaId(dateObj) {
+            let yyyy = dateObj.getFullYear();
+            let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let dd = String(dateObj.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function formatearTiempo(totalSegundos) {
+            let horas = Math.floor(totalSegundos / 3600);
+            let minutes = Math.floor((totalSegundos % 3600) / 60);
+            let seg = totalSegundos % 60;
+            return String(horas).padStart(2, "0") + ":" +
+                   String(minutes).padStart(2, "0") + ":" +
+                   String(seg).padStart(2, "0");
+        }
+
+        function actualizarPantalla() {
+            document.getElementById("timer").innerText = formatearTiempo(segundos);
+        }
+
+        function toggleTimer() {
+            const boton = document.getElementById("btnTimer");
+
+            if (intervalo === null) {
+                intervalo = setInterval(() => {
+                    segundos++;
+                    actualizarPantalla();
+                }, 1000);
+                boton.innerText = "Pausar";
+            } else {
+                guardarRegistroEnFecha(selectedDateStr, "Timer", segundos);
+                clearInterval(intervalo);
+                intervalo = null;
+                boton.innerText = "Continuar";
+            }
+        }
+
+        function reiniciarTimer() {
+            if (segundos > 0) {
+                guardarRegistroEnFecha(selectedDateStr, "Timer", segundos);
+            }
+            clearInterval(intervalo);
+            intervalo = null;
+            segundos = 0;
+            actualizarPantalla();
+            document.getElementById("btnTimer").innerText = "Iniciar";
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebarMenu");
+            sidebar.classList.toggle("open");
+        }
+
+        function cambiarFondo(event) {
+            const archivo = event.target.files[0];
+            if (archivo) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.body.style.background = `url('${e.target.result}') no-repeat center center/cover`;
+                    localStorage.setItem('timerCustomBg', e.target.result);
+                };
+                reader.readAsDataURL(archivo);
+            }
+        }
+
+        function cargarFondoGuardado() {
+            const bg = localStorage.getItem('timerCustomBg');
+            if (bg) {
+                document.body.style.background = `url('${bg}') no-repeat center center/cover`;
+            }
+        }
+
+        function renderCalendario() {
+            const daysContainer = document.getElementById("calendarDays");
+            const monthYearLabel = document.getElementById("calendarMonthYear");
+            daysContainer.innerHTML = "";
+
+            const nombresDias = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+            nombresDias.forEach(d => {
+                daysContainer.innerHTML += `<div class="calendar-day day-name">${d}</div>`;
+            });
+
+            const año = currentDate.getFullYear();
+            const mes = currentDate.getMonth();
+
+            const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            monthYearLabel.innerText = `${nombresMeses[mes]} ${año}`;
+
+            const primerDiaIndex = new Date(año, mes, 1).getDay();
+            const ultimoDiaFecha = new Date(año, mes + 1, 0).getDate();
+
+            for (let i = 0; i < primerDiaIndex; i++) {
+                daysContainer.innerHTML += `<div></div>`;
+            }
+
+            for (let dia = 1; dia <= ultimoDiaFecha; dia++) {
+                let fechaLoop = new Date(año, mes, dia);
+                let idFecha = obtenerFechaId(fechaLoop);
+                
+                let claseExtra = "";
+                if (idFecha === selectedDateStr) claseExtra += " selected";
+                if (appData[idFecha] && appData[idFecha].length > 0) claseExtra += " has-data";
+
+                daysContainer.innerHTML += `<div class="calendar-day${claseExtra}" onclick="cambiarDiaSeleccionado('${idFecha}')">${dia}</div>`;
+            }
+        }
+
+        function mesAnterior() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendario();
+        }
+
+        function mesSiguiente() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendario();
+        }
+
+        function cambiarDiaSeleccionado(idFecha) {
+            selectedDateStr = idFecha;
+            let partes = idFecha.split("-");
+            document.getElementById("plannerTargetTitle").innerText = `Agenda: ${partes[2]}/${partes[1]}`;
+            renderCalendario();
+            actualizarListaAgenda();
+        }
+
+        function guardarRegistroEnFecha(idFecha, tipo, valor) {
+            if (valor === 0) return;
+
+            if (!appData[idFecha]) {
+                appData[idFecha] = [];
+            }
+
+            const ahora = new Date();
+            const timestamp = String(ahora.getHours()).padStart(2, '0') + ":" + String(ahora.getMinutes()).padStart(2, '0');
+
+            if (tipo === "Timer") {
+                let notaInput = document.getElementById("inputNota").value.trim() || "Sesion de estudio";
+                appData[idFecha].push({
+                    id: Date.now(),
+                    tipo: "timer",
+                    hora: timestamp,
+                    info: `Estudio: ${formatearTiempo(valor)}`,
+                    sub: notaInput
+                });
+                segundos = 0;
+                actualizarPantalla();
+            } else {
+                appData[idFecha].push({
+                    id: Date.now(),
+                    tipo: "manual",
+                    hora: timestamp,
+                    info: valor,
+                    sub: "Nota de agenda"
+                });
+            }
+
+            localStorage.setItem('timerAppData', JSON.stringify(appData));
+            actualizarListaAgenda();
+            renderCalendario();
+        }
+
+        function agregarNotaManual() {
+            const input = document.getElementById("inputManualPlanner");
+            const texto = input.value.trim();
+            if (texto !== "") {
+                guardarRegistroEnFecha(selectedDateStr, "Manual", texto);
+                input.value = "";
+            }
+        }
+
+        function actualizarListaAgenda() {
+            const lista = document.getElementById("listaHistorial");
+            lista.innerHTML = "";
+
+            const registros = appData[selectedDateStr] || [];
+
+            if (registros.length === 0) {
+                lista.innerHTML = `<li style="opacity: 0.5; font-style: italic; border: none; background: transparent;">No hay actividades para hoy</li>`;
+                return;
+            }
+
+            for (let i = registros.length - 1; i >= 0; i--) {
+                let item = registros[i];
+                let itemLi = document.createElement("li");
+                
+                if (item.tipo === "manual") {
+                    itemLi.style.borderLeft = "3px solid #007aff";
+                } else {
+                    itemLi.style.borderLeft = "3px solid #34c759";
+                }
+
+                itemLi.innerHTML = `
+                    <button class="btn-item-delete" onclick="eliminarItem(${item.id})">x</button>
+                    <b>${item.hora}</b> - ${item.info} <br>
+                    <span style="opacity:0.6; font-size:11px;">↳ ${item.sub}</span>
+                `;
+                lista.appendChild(itemLi);
+            }
+        }
+
+        function eliminarItem(itemId) {
+            if (appData[selectedDateStr]) {
+                appData[selectedDateStr] = appData[selectedDateStr].filter(item => item.id !== itemId);
+                if (appData[selectedDateStr].length === 0) {
+                    delete appData[selectedDateStr];
+                }
+                localStorage.setItem('timerAppData', JSON.stringify(appData));
+                actualizarListaAgenda();
+                renderCalendario();
+            }
+        }
+    </script>
+</body>
+</html>
